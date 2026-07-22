@@ -1,0 +1,74 @@
+// Prisma schema for Gema Akuntabilitas Quiz App
+// Provider: SQLite for development, switch to PostgreSQL for production
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String   // bcrypt hash
+  createdAt DateTime @default(now())
+}
+
+model Materi {
+  id        Int      @id @default(autoincrement())
+  judul     String
+  konten    String   // rich text / markdown
+  gambarUrl String?
+  videoUrl  String?
+  urutan    Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Soal {
+  id           Int      @id @default(autoincrement())
+  pertanyaan   String
+  pilihanA     String
+  pilihanB     String
+  pilihanC     String
+  pilihanD     String
+  jawabanBenar String   // "A" | "B" | "C" | "D"
+  urutan       Int      @default(0)
+  createdAt    DateTime @default(now())
+}
+
+model Peserta {
+  id           Int           @id @default(autoincrement())
+  nama         String
+  instansi     String
+  email        String?
+  noHp         String?
+  createdAt    DateTime      @default(now())
+  quizSessions QuizSession[]
+}
+
+model QuizSession {
+  id                    Int       @id @default(autoincrement())
+  pesertaId             Int
+  peserta               Peserta   @relation(fields: [pesertaId], references: [id])
+  status                String    @default("in_progress") // in_progress | selesai
+  jawaban               String    @default("{}") // JSON string: { soalId: "A" }
+  soalIds               String    @default("[]")  // JSON string: [soalId1, soalId2, ...]
+  nilaiAkhir            Int?
+  jumlahBenar           Int?
+  jumlahSalah           Int?
+  totalSoal             Int?
+  durasiPengerjaanDetik Int?
+  startedAt             DateTime  @default(now())
+  finishedAt            DateTime?
+
+  @@index([pesertaId])
+}
+
+model Pengaturan {
+  id    Int    @id @default(autoincrement())
+  key   String @unique  // "jumlah_soal", "durasi_menit", "acak_soal"
+  value String
+}
